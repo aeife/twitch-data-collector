@@ -1,0 +1,25 @@
+{
+  "name": "twitch-data-collector",
+  "version": "0.0.0",
+  "description": "",
+  "main": "collector.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aeife/twitch-data-collector.git"
+  },
+  "author": "André Eife <andre.eife@gmail.com>",
+  "license": " ",
+  "bugs": {
+    "url": "https://github.com/aeife/twitch-data-collector/issues"
+  },
+  "homepage": "https://github.com/aeife/twitch-data-collector",
+  "dependencies": {
+    "express": "^4.12.4",
+    "lodash": "^3.9.3",
+    "mongoose": "^4.0.5",
+    "request": "^2.57.0"
+  }
+}
