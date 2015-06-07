@@ -3,8 +3,17 @@ var app = express();
 var request = require('request');
 var _ = require('lodash');
 var async = require('async');
+var log4js = require('log4js');
 var Game = require('./app/models/game').model;
 var Stats = require('./app/models/stats').model;
+
+log4js.configure({
+  appenders: [
+    { type: 'console' },
+    { type: 'file', filename: 'logs/collector.log'}
+  ]
+});
+var logger = log4js.getLogger();
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
@@ -18,7 +27,7 @@ var server = app.listen(3000, function () {
   var host = server.address().address;
   var port = server.address().port;
 
-  console.log('Example app listening at http://%s:%s', host, port);
+  logger.info('Example app listening at http://%s:%s', host, port);
 });
 
 var updateGameData = function (data) {
@@ -28,10 +37,10 @@ var updateGameData = function (data) {
       var game;
 
       if (dbEntry) {
-        console.log('game "%s" already in database', dbEntry.name);
+        logger.info('game "%s" already in database', dbEntry.name);
         game = dbEntry;
       } else {
-        console.log('new game: "%s"', entry.game.name);
+        logger.info('new game: "%s"', entry.game.name);
         game = new Game({
           name: entry.game.name
         });
@@ -43,7 +52,7 @@ var updateGameData = function (data) {
 
       game.save(function(err) {
         if (err) {
-          console.log('error while updating game "%s"', game.name);
+          logger.info('error while updating game "%s"', game.name);
         }
       });
     });
@@ -55,7 +64,7 @@ var updateGameData = function (data) {
   });
   Game.where('name').nin(twitchGameNames).exec(function (err, dbEntries) {
     dbEntries.forEach(function (game) {
-      console.log('adding zero value entry to game "%s"', game.name);
+      logger.info('adding zero value entry to game "%s"', game.name);
       game.stats.push({
         viewers: 0,
         channels: 0
@@ -63,7 +72,7 @@ var updateGameData = function (data) {
 
       game.save(function(err) {
         if (err) {
-          console.log('error while updating game %s', game.name);
+          logger.info('error while updating game %s', game.name);
         }
       });
     });
@@ -77,7 +86,7 @@ var requestGames = function () {
 
     var twitchRequests = [];
     for (var i = 0; i <= total; i = i+limit) {
-      console.log('requesting https://api.twitch.tv/kraken/games/top?limit='+limit+'&offset='+i);
+      logger.info('requesting https://api.twitch.tv/kraken/games/top?limit='+limit+'&offset='+i);
       (function (offset) {
         twitchRequests.push(function (cb) {
           request.get({url: 'https://api.twitch.tv/kraken/games/top', qs: {limit: limit, offset: offset}, json: true}, cb);
@@ -89,7 +98,7 @@ var requestGames = function () {
       var twitchData = results.reduce(function (combinedData, result) {
         return combinedData.concat(result[1].top);
       }, []);
-      console.log('fetched ' + twitchData.length + ' games from twitch api');
+      logger.info('fetched ' + twitchData.length + ' games from twitch api');
       updateGameData(twitchData);
     });
   });
