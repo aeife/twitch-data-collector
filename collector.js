@@ -137,5 +137,5 @@ var requestGames = function () {
 
 setInterval(function () {
   requestGames();
-}, 1000 * 60 * 5);
+}, 1000 * 60 * 30);
 requestGames();
