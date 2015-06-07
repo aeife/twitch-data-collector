@@ -28,7 +28,9 @@ var controls = require('./app/api/control.js')(app);
 app.use('/controls', controls);
 
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/twitch');
+mongoose.connect('mongodb://localhost:27017/twitch', {
+  server: { socketOptions: { keepAlive: 1}}
+});
 
 var server = app.listen(3000, function () {
 
