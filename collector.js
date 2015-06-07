@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var request = require('request');
 var _ = require('lodash');
+var async = require('async');
 var Game = require('./app/models/game').model;
 var Stats = require('./app/models/stats').model;
 var dataCollectingInProgress = false;
@@ -21,55 +22,60 @@ var server = app.listen(3000, function () {
   console.log('Example app listening at http://%s:%s', host, port);
 });
 
-var requestGames = function (nextUrl) {
-  dataCollectingInProgress = true;
+var updateGameData = function (data) {
+  data.forEach(function (entry) {
+    Game.findOne({ name: entry.game.name }, function (err, dbEntry) {
+      var game;
 
-  if (!nextUrl) {
-    nextUrl = 'https://api.twitch.tv/kraken/games/top?limit=100';
-  }
-
-  console.log('requesting: ' + nextUrl);
-  request.get({url: nextUrl, json: true}, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      body.top.forEach(function (entry) {
-        Game.findOne({ name: entry.game.name }, function (err, dbEntry) {
-          var game;
-
-          if (dbEntry) {
-            console.log('game already in database');
-            game = dbEntry;
-          } else {
-            console.log('new game');
-            game = new Game({
-              name: entry.game.name
-            });
-          }
-          game.stats.push({
-            viewers: entry.viewers,
-            channels: entry.channels
-          });
-
-          game.save(function(err) {
-            if (err) {
-              console.log('error while updating');
-            }
-
-            //console.log('game updated');
-          });
+      if (dbEntry) {
+        console.log('game already in database');
+        game = dbEntry;
+      } else {
+        console.log('new game');
+        game = new Game({
+          name: entry.game.name
         });
+      }
+      game.stats.push({
+        viewers: entry.viewers,
+        channels: entry.channels
       });
 
-      if (body.top.length) {
-        requestGames(body._links.next);
-      } else {
-        console.log('finished collecting data');
-        dataCollectingInProgress = false;
-      }
-    }
+      game.save(function(err) {
+        if (err) {
+          console.log('error while updating');
+        }
+      });
+    });
   });
 };
 
+var requestGames = function () {
+  dataCollectingInProgress = true;
 
+  request.get({url: 'https://api.twitch.tv/kraken/games/top?limit=1', json: true}, function (error, response, data) {
+    var limit = 100;
+    var total = data._total + limit;
+
+    var twitchRequests = [];
+    for (var i = 0; i <= total; i = i+limit) {
+      console.log('requesting https://api.twitch.tv/kraken/games/top?limit='+limit+'&offset='+i);
+      (function (offset) {
+        twitchRequests.push(function (cb) {
+          request.get({url: 'https://api.twitch.tv/kraken/games/top', qs: {limit: limit, offset: offset}, json: true}, cb);
+        });
+      })(i);
+    }
+
+    async.parallel(twitchRequests, function (err, results) {
+      var twitchData = results.reduce(function (combinedData, result) {
+        return combinedData.concat(result[1].top);
+      }, []);
+      console.log('fetched ' + twitchData.length + ' games from twitch api');
+      updateGameData(twitchData);
+    });
+  });
+};
 
 setInterval(function () {
   if (!dataCollectingInProgress) {
