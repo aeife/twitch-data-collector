@@ -19,6 +19,7 @@ log4js.configure({
   ]
 });
 var logger = log4js.getLogger();
+logger.setLevel('INFO')
 
 var router = express.Router();
 router.get('/', function(req, res) {
@@ -47,10 +48,10 @@ var updateGameData = function (data) {
       var game;
 
       if (dbEntry) {
-        logger.info('game "%s" already in database', dbEntry.name);
+        logger.debug('game "%s" already in database', dbEntry.name);
         game = dbEntry;
       } else {
-        logger.info('new game: "%s"', entry.game.name);
+        logger.debug('new game: "%s"', entry.game.name);
         game = new Game({
           name: entry.game.name
         });
@@ -78,7 +79,7 @@ var updateGameData = function (data) {
       return sum + entry.channels;
     }, 0)
   });
-  logger.info('adding total stats');
+  logger.debug('adding total stats');
   totalStats.save(function(err) {
     if (err) {
       logger.error('error while saving total stats');
@@ -92,7 +93,7 @@ var updateGameData = function (data) {
   });
   Game.where('name').nin(twitchGameNames).exec(function (err, dbEntries) {
     dbEntries.forEach(function (game) {
-      logger.info('adding zero value entry to game "%s"', game.name);
+      logger.debug('adding zero value entry to game "%s"', game.name);
       game.stats.push({
         viewers: 0,
         channels: 0
@@ -100,7 +101,8 @@ var updateGameData = function (data) {
 
       game.save(function(err) {
         if (err) {
-          logger.info('error while updating game %s', game.name);
+          logger.error('error while updating game %s', game.name);
+          logger.error(err);
         }
       });
     });
@@ -119,7 +121,7 @@ var requestGames = function () {
 
     var twitchRequests = [];
     for (var i = 0; i <= total; i = i+limit) {
-      logger.info('requesting https://api.twitch.tv/kraken/games/top?limit='+limit+'&offset='+i);
+      logger.debug('requesting https://api.twitch.tv/kraken/games/top?limit='+limit+'&offset='+i);
       (function (offset) {
         twitchRequests.push(function (cb) {
           request.get({url: 'https://api.twitch.tv/kraken/games/top', qs: {limit: limit, offset: offset}, json: true}, cb);
@@ -131,7 +133,7 @@ var requestGames = function () {
       var twitchData = results.reduce(function (combinedData, result) {
         return combinedData.concat(result[1].top);
       }, []);
-      logger.info('fetched ' + twitchData.length + ' games from twitch api');
+      logger.debug('fetched ' + twitchData.length + ' games from twitch api');
       updateGameData(twitchData);
     });
   });
