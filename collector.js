@@ -60,7 +60,8 @@ var updateGameData = function (data) {
 
       game.save(function(err) {
         if (err) {
-          logger.info('error while updating game "%s"', game.name);
+          logger.error('error while updating game "%s"', game.name);
+          logger.error(err);
         }
       });
     });
@@ -78,7 +79,8 @@ var updateGameData = function (data) {
   logger.info('adding total stats');
   totalStats.save(function(err) {
     if (err) {
-      logger.info('error while saving total stats');
+      logger.error('error while saving total stats');
+      logger.error(err);
     }
   });
 
