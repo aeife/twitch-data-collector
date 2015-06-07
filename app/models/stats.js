@@ -8,14 +8,14 @@ var StatsSchema = new Schema({
   channels: {
       type: Number
   },
-  created_at: {
+  dateCreated: {
     type: Date
   }
 });
 
 StatsSchema.pre('save', function(next){
-  if ( !this.created_at ) {
-    this.created_at = new Date();
+  if (!this.dateCreated) {
+    this.dateCreated = new Date();
   }
   next();
 });
