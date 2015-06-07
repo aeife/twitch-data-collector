@@ -23,15 +23,16 @@ var server = app.listen(3000, function () {
 });
 
 var updateGameData = function (data) {
+  // update or create received twitch games in db
   data.forEach(function (entry) {
     Game.findOne({ name: entry.game.name }, function (err, dbEntry) {
       var game;
 
       if (dbEntry) {
-        console.log('game already in database');
+        console.log('game "%s" already in database', dbEntry.name);
         game = dbEntry;
       } else {
-        console.log('new game');
+        console.log('new game: "%s"', entry.game.name);
         game = new Game({
           name: entry.game.name
         });
@@ -43,7 +44,27 @@ var updateGameData = function (data) {
 
       game.save(function(err) {
         if (err) {
-          console.log('error while updating');
+          console.log('error while updating game "%s"', game.name);
+        }
+      });
+    });
+  });
+
+  // find games in db that were not received from twitch, add entry to them
+  var twitchGameNames = data.map(function (dataEntry) {
+    return dataEntry.game.name;
+  });
+  Game.where('name').nin(twitchGameNames).exec(function (err, dbEntries) {
+    dbEntries.forEach(function (game) {
+      console.log('adding zero value entry to game "%s"', game.name);
+      game.stats.push({
+        viewers: 0,
+        channels: 0
+      });
+
+      game.save(function(err) {
+        if (err) {
+          console.log('error while updating game %s', game.name);
         }
       });
     });
