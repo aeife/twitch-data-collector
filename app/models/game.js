@@ -9,7 +9,21 @@ var GameSchema = new Schema({
         required: true,
         unique: true
     },
+    dateCreated: {
+      type: Date
+    },
+    dateModified: {
+      type: Date
+    },
     stats: [StatsSchema]
+});
+
+GameSchema.pre('save', function(next){
+  this.dateModified = new Date();
+  if (!this.dateCreated) {
+    this.dateCreated = new Date();
+  }
+  next();
 });
 
 module.exports = {
