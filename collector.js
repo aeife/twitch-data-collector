@@ -66,6 +66,22 @@ var updateGameData = function (data) {
     });
   });
 
+  // save total stats
+  var totalStats = new Stats({
+    viewers: data.reduce(function (sum, entry) {
+      return sum + entry.viewers;
+    }, 0),
+    channels: data.reduce(function (sum, entry) {
+      return sum + entry.channels;
+    }, 0)
+  });
+  logger.info('adding total stats');
+  totalStats.save(function(err) {
+    if (err) {
+      logger.info('error while saving total stats');
+    }
+  });
+
   // find games in db that were not received from twitch, add entry to them
   var twitchGameNames = data.map(function (dataEntry) {
     return dataEntry.game.name;
