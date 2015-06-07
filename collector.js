@@ -4,8 +4,13 @@ var request = require('request');
 var _ = require('lodash');
 var async = require('async');
 var log4js = require('log4js');
+var metrics = require('./app/metrics');
 var Game = require('./app/models/game').model;
 var Stats = require('./app/models/stats').model;
+
+var collectionMeter = metrics.meter('dataCollection');
+var collectionTimer = metrics.timer('dataCollectionTime');
+var collectionTimerWatch;
 
 log4js.configure({
   appenders: [
@@ -15,9 +20,12 @@ log4js.configure({
 });
 var logger = log4js.getLogger();
 
-app.get('/', function (req, res) {
-  res.send('Hello World!');
+var router = express.Router();
+router.get('/', function(req, res) {
+    res.json({ message: 'working' });
 });
+var controls = require('./app/api/control.js')(app);
+app.use('/controls', controls);
 
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/twitch');
@@ -76,10 +84,15 @@ var updateGameData = function (data) {
         }
       });
     });
+    logger.info('finished data collection run');
+    collectionTimerWatch.end();
   });
 };
 
 var requestGames = function () {
+  logger.info('starting data collection run');
+  collectionMeter.mark();
+  collectionTimerWatch = collectionTimer.start();
   request.get({url: 'https://api.twitch.tv/kraken/games/top?limit=1', json: true}, function (error, response, data) {
     var limit = 100;
     var total = data._total + limit;
