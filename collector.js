@@ -5,7 +5,6 @@ var _ = require('lodash');
 var async = require('async');
 var Game = require('./app/models/game').model;
 var Stats = require('./app/models/stats').model;
-var dataCollectingInProgress = false;
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
@@ -72,8 +71,6 @@ var updateGameData = function (data) {
 };
 
 var requestGames = function () {
-  dataCollectingInProgress = true;
-
   request.get({url: 'https://api.twitch.tv/kraken/games/top?limit=1', json: true}, function (error, response, data) {
     var limit = 100;
     var total = data._total + limit;
@@ -99,8 +96,6 @@ var requestGames = function () {
 };
 
 setInterval(function () {
-  if (!dataCollectingInProgress) {
-    requestGames();
-  }
+  requestGames();
 }, 1000 * 60 * 5);
 requestGames();
