@@ -45,6 +45,11 @@ var updateGameData = function (data) {
   // update or create received twitch games in db
   data.forEach(function (entry) {
     Game.findOne({ name: entry.game.name }, function (err, dbEntry) {
+      if (err) {
+        logger.error('error while searching for game "%s" in database', game.name);
+        logger.error(err);
+      }
+
       var game;
 
       if (dbEntry) {
