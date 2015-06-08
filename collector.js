@@ -33,12 +33,11 @@ mongoose.connect('mongodb://localhost:27017/twitch', {
   server: { socketOptions: { keepAlive: 1}}
 });
 
-var server = app.listen(3000, function () {
+var args = process.argv.slice(2);
+var port = args[0] || 3000;
 
-  var host = server.address().address;
-  var port = server.address().port;
-
-  logger.info('Example app listening at http://%s:%s', host, port);
+var server = app.listen(port, function () {
+  logger.info('Example app listening at http://%s:%s', server.address().address, server.address().port);
 });
 
 var updateGameData = function (data) {
