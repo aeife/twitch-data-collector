@@ -70,23 +70,6 @@ var updateGameData = function (data) {
     });
   });
 
-  // save total stats
-  var totalStats = new Stats({
-    viewers: data.reduce(function (sum, entry) {
-      return sum + entry.viewers;
-    }, 0),
-    channels: data.reduce(function (sum, entry) {
-      return sum + entry.channels;
-    }, 0)
-  });
-  logger.debug('adding total stats');
-  totalStats.save(function(err) {
-    if (err) {
-      logger.error('error while saving total stats');
-      logger.error(err);
-    }
-  });
-
   // find games in db that were not received from twitch, add entry to them
   var twitchGameNames = data.map(function (dataEntry) {
     return dataEntry.game.name;
@@ -111,11 +94,40 @@ var updateGameData = function (data) {
   });
 };
 
-var requestGames = function () {
-  logger.info('starting data collection run');
-  collectionMeter.mark();
-  collectionTimerWatch = collectionTimer.start();
-  request.get({url: 'https://api.twitch.tv/kraken/games/top?limit=1', json: true}, function (error, response, data) {
+var collectTotalStats = function () {
+  logger.debug('requesting streams summary data from twitch');
+
+  request.get({url: 'https://api.twitch.tv/kraken/streams/summary', json: true}, function (err, res, data) {
+    if (err) {
+      logger.error('error while requesting streams summary from twitch');
+      logger.error(err);
+      return;
+    }
+
+    var totalStats = new Stats({
+      viewers: data.viewers,
+      channels: data.channels
+    });
+    logger.debug('adding total stats');
+    totalStats.save(function(err) {
+      if (err) {
+        logger.error('error while saving total stats');
+        logger.error(err);
+      }
+    });
+  });
+};
+
+var collectGames = function () {
+  logger.debug('requesting game data from twitch');
+
+  request.get({url: 'https://api.twitch.tv/kraken/games/top?limit=1', json: true}, function (err, res, data) {
+    if (err) {
+      logger.error('error while requesting games from twitch');
+      logger.error(err);
+      return;
+    }
+
     var limit = 100;
     var total = data._total + limit;
 
@@ -139,7 +151,16 @@ var requestGames = function () {
   });
 };
 
+var collectData = function () {
+  logger.info('starting data collection run');
+  collectionMeter.mark();
+  collectionTimerWatch = collectionTimer.start();
+
+  collectGames();
+  collectTotalStats();
+};
+
 setInterval(function () {
-  requestGames();
+  collectData();
 }, 1000 * 60 * 30);
-requestGames();
+collectData();
