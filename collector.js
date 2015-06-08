@@ -42,7 +42,14 @@ var server = app.listen(port, function () {
 
 var updateGameData = function (data) {
   // update or create received twitch games in db
+  var gamesProcessed = [];
   data.forEach(function (entry) {
+    // prevent duplicates: only process game once
+    if (gamesProcessed.indexOf(entry.game.name) > -1) {
+      return;
+    }
+    gamesProcessed.push(entry.game.name);
+
     Game.findOne({ name: entry.game.name }, function (err, dbEntry) {
       if (err) {
         logger.error('error while searching for game "%s" in database', game.name);
