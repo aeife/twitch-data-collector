@@ -43,14 +43,14 @@ var server = app.listen(port, function () {
 var updateGameData = function (data) {
   // update or create received twitch games in db
   var gamesProcessed = [];
+  var dataEntryProcesses = [];
   data.forEach(function (entry) {
     // prevent duplicates: only process game once
     if (gamesProcessed.indexOf(entry.game.name) > -1) {
       return;
     }
     gamesProcessed.push(entry.game.name);
-
-    Game.findOne({ name: entry.game.name }, function (err, dbEntry) {
+    Game.findOne({ twitchGameId: entry.game._id }, function (err, dbEntry) {
       if (err) {
         logger.error('error while searching for game "%s" in database', game.name);
         logger.error(err);
@@ -64,7 +64,8 @@ var updateGameData = function (data) {
       } else {
         logger.debug('new game: "%s"', entry.game.name);
         game = new Game({
-          name: entry.game.name
+          name: entry.game.name,
+          twitchGameId: entry.game._id
         });
       }
       game.stats.push({
