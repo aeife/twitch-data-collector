@@ -19,7 +19,7 @@ log4js.configure({
   ]
 });
 var logger = log4js.getLogger();
-logger.setLevel('INFO')
+logger.setLevel('INFO');
 
 var router = express.Router();
 router.get('/', function(req, res) {
@@ -43,41 +43,44 @@ var server = app.listen(port, function () {
 var updateGameData = function (data) {
   // update or create received twitch games in db
   var gamesProcessed = [];
-  var dataEntryProcesses = [];
+  var gameUpdates = [];
   data.forEach(function (entry) {
     // prevent duplicates: only process game once
     if (gamesProcessed.indexOf(entry.game.name) > -1) {
       return;
     }
     gamesProcessed.push(entry.game.name);
-    Game.findOne({ twitchGameId: entry.game._id }, function (err, dbEntry) {
-      if (err) {
-        logger.error('error while searching for game "%s" in database', game.name);
-        logger.error(err);
-      }
-
-      var game;
-
-      if (dbEntry) {
-        logger.debug('game "%s" already in database', dbEntry.name);
-        game = dbEntry;
-      } else {
-        logger.debug('new game: "%s"', entry.game.name);
-        game = new Game({
-          name: entry.game.name,
-          twitchGameId: entry.game._id
-        });
-      }
-      game.stats.push({
-        viewers: entry.viewers,
-        channels: entry.channels
-      });
-
-      game.save(function(err) {
+    gameUpdates.push(function (cb) {
+      Game.findOne({ twitchGameId: entry.game._id }, function (err, dbEntry) {
         if (err) {
-          logger.error('error while updating game "%s"', game.name);
+          logger.error('error while searching for game "%s" in database', game.name);
           logger.error(err);
         }
+
+        var game;
+
+        if (dbEntry) {
+          logger.debug('game "%s" already in database', dbEntry.name);
+          game = dbEntry;
+        } else {
+          logger.debug('new game: "%s"', entry.game.name);
+          game = new Game({
+            name: entry.game.name,
+            twitchGameId: entry.game._id
+          });
+        }
+        game.stats.push({
+          viewers: entry.viewers,
+          channels: entry.channels
+        });
+
+        game.save(function(err) {
+          if (err) {
+            logger.error('error while updating game "%s"', game.name);
+            logger.error(err);
+          }
+          cb();
+        });
       });
     });
   });
@@ -101,6 +104,9 @@ var updateGameData = function (data) {
         }
       });
     });
+  });
+
+  async.parallel(gameUpdates, function () {
     logger.info('finished data collection run');
     collectionTimerWatch.end();
   });
