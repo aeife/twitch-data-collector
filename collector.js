@@ -55,58 +55,33 @@ var updateGameData = function (data) {
     }
     gamesProcessed.push(entry.game.name);
     gameUpdates.push(function (cb) {
-      Game.findOne({ twitchGameId: entry.game._id }, function (err, dbEntry) {
-        if (err) {
-          logger.error('error while searching for game "%s" in database', game.name);
-          logger.error(err);
-        }
-
-        var game;
-
-        if (dbEntry) {
-          logger.debug('game "%s" already in database', dbEntry.name);
-          game = dbEntry;
-        } else {
-          logger.debug('new game: "%s"', entry.game.name);
-          game = new Game({
-            name: entry.game.name,
-            twitchGameId: entry.game._id
-          });
-        }
-        game.stats.push({
-          viewers: entry.viewers,
-          channels: entry.channels,
-          collectionRun: currentCollectionRun._id
-        });
-
-        game.save(function(err) {
-          if (err) {
-            logger.error('error while updating game "%s"', game.name);
-            logger.error(err);
-          }
-          cb();
-        });
-      });
-    });
-  });
-
-  // find games in db that were not received from twitch, add entry to them
-  var twitchGameNames = data.map(function (dataEntry) {
-    return dataEntry.game.name;
-  });
-  Game.where('name').nin(twitchGameNames).exec(function (err, dbEntries) {
-    dbEntries.forEach(function (game) {
-      logger.debug('adding zero value entry to game "%s"', game.name);
-      game.stats.push({
-        viewers: 0,
-        channels: 0,
+      var statEntry = new Stats({
+        viewers: entry.viewers,
+        channels: entry.channels,
         collectionRun: currentCollectionRun._id
       });
-
-      game.save(function(err) {
+      Game.update({twitchGameId: entry.game._id}, {$addToSet: {stats: statEntry}}, function (err, affected) {
         if (err) {
-          logger.error('error while updating game %s', game.name);
+          logger.error('error while updating game "%s" in database', entry.game.name);
           logger.error(err);
+        }
+
+        if (!affected.n) {
+          new Game({
+            name: entry.game.name,
+            twitchGameId: entry.game._id,
+            stats: [statEntry]
+          }).save(function (err) {
+            if (err) {
+              logger.error('error while creating new game "%s" in database', entry.game.name);
+              logger.error(err);
+            }
+            logger.debug('added new game game "%s" to database', entry.game.name);
+            cb();
+          });
+        } else {
+          logger.debug('added stat entry to game "%s"', entry.game.name);
+          cb();
         }
       });
     });
