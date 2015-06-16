@@ -8,8 +8,9 @@ var StatsSchema = new Schema({
   channels: {
       type: Number
   },
-  dateCreated: {
-    type: Date
+  collectionRun: {
+      type: Number,
+      ref: 'CollectionRun'
   }
 });
 

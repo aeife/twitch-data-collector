@@ -5,9 +5,7 @@ var _ = require('lodash');
 var async = require('async');
 var log4js = require('log4js');
 var metrics = require('./app/metrics');
-var Game = require('./app/models/game').model;
-var Stats = require('./app/models/stats').model;
-
+var autoIncrement = require('mongoose-auto-increment');
 var collectionMeter = metrics.meter('dataCollection');
 var collectionTimer = metrics.timer('dataCollectionTime');
 var collectionTimerWatch;
@@ -29,9 +27,10 @@ var controls = require('./app/api/control.js')(app);
 app.use('/controls', controls);
 
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/twitch', {
+var dbConnection = mongoose.connect('mongodb://localhost:27017/twitch', {
   server: { socketOptions: { keepAlive: 1}}
 });
+autoIncrement.initialize(dbConnection);
 
 var args = process.argv.slice(2);
 var port = args[0] || 3000;
@@ -39,6 +38,11 @@ var port = args[0] || 3000;
 var server = app.listen(port, function () {
   logger.info('Example app listening at http://%s:%s', server.address().address, server.address().port);
 });
+
+var Game = require('./app/models/game').model;
+var Stats = require('./app/models/stats').model;
+var CollectionRun = require('./app/models/collectionRun').model;
+var currentCollectionRun;
 
 var updateGameData = function (data) {
   // update or create received twitch games in db
@@ -71,7 +75,8 @@ var updateGameData = function (data) {
         }
         game.stats.push({
           viewers: entry.viewers,
-          channels: entry.channels
+          channels: entry.channels,
+          collectionRun: currentCollectionRun._id
         });
 
         game.save(function(err) {
@@ -94,7 +99,8 @@ var updateGameData = function (data) {
       logger.debug('adding zero value entry to game "%s"', game.name);
       game.stats.push({
         viewers: 0,
-        channels: 0
+        channels: 0,
+        collectionRun: currentCollectionRun._id
       });
 
       game.save(function(err) {
@@ -124,7 +130,8 @@ var collectTotalStats = function () {
 
     var totalStats = new Stats({
       viewers: data.viewers,
-      channels: data.channels
+      channels: data.channels,
+      collectionRun: currentCollectionRun._id
     });
     logger.debug('adding total stats');
     totalStats.save(function(err) {
@@ -174,8 +181,16 @@ var collectData = function () {
   collectionMeter.mark();
   collectionTimerWatch = collectionTimer.start();
 
-  collectGames();
-  collectTotalStats();
+  new CollectionRun().save(function (err, entry) {
+    currentCollectionRun = entry;
+    if (err) {
+      logger.error('error while saving new collction run', game.name);
+      logger.error(err);
+    }
+
+    collectGames();
+    collectTotalStats();
+  });
 };
 
 setInterval(function () {
