@@ -87,25 +87,6 @@ var updateGameData = function (data) {
     });
   });
 
-  // add 0 entry to all other games in database
-  gameUpdates.push(function (cb) {
-    Game.update({twitchGameId: {$nin: data.map(function (dataEntry) {
-      return dataEntry.game._id;
-    })}}, {$addToSet: {stats: new Stats({
-      viewers: 0,
-      channels: 0,
-      collectionRun: currentCollectionRun._id
-    })}}, {multi: true}, function (err, affected) {
-      if (err) {
-        logger.error('error while adding empty stat entry to games not received from twitch');
-        logger.error(err);
-      }
-
-      logger.debug('added empty stat entry to games not received from twich');
-      cb();
-    });
-  });
-
   async.parallel(gameUpdates, function () {
     logger.info('finished data collection run');
     collectionTimerWatch.end();
