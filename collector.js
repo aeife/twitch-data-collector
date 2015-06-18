@@ -27,7 +27,7 @@ var controls = require('./app/api/control.js')(app);
 app.use('/controls', controls);
 
 var mongoose = require('mongoose');
-var dbConnection = mongoose.connect('mongodb://localhost:27017/twitch', {
+var dbConnection = mongoose.connect('mongodb://localhost:27017/twitchdata', {
   server: { socketOptions: { keepAlive: 1}}
 });
 autoIncrement.initialize(dbConnection);
