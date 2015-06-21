@@ -41,6 +41,9 @@ var server = app.listen(port, function () {
 var dataGatherer = require('./app/dataGatherer');
 var dataUpdater = require('./app/dataUpdater');
 var dataValidator = require('./app/dataValidator');
+var retryLimit = 3;
+var retry = 0;
+
 
 var collectData = function () {
   logger.info('starting data collection run');
@@ -74,6 +77,13 @@ var collectData = function () {
       });
     } else {
       logger.error('error while gathering twitch data');
+      if (retry < retryLimit) {
+        logger.error('retry %s', ++retry);
+        collectData();
+      } else {
+        logger.error('all retries failed');
+        retry = 0;
+      }
     }
   });
 };
