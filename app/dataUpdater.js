@@ -33,6 +33,7 @@ module.exports = {
             new Game({
               name: entry.game.name,
               twitchGameId: entry.game._id,
+              giantbombId: entry.game.giantbomb_id,
               stats: [statEntry]
             }).save(function (err) {
               if (err) {

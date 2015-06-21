@@ -21,6 +21,9 @@ var GameSchema = new Schema({
       unique: true,
       index: true
     },
+    giantbombId: {
+      type: Number
+    },
     stats: [StatsSchema]
 });
 
