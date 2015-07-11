@@ -3,8 +3,108 @@ var logger = require('log4js').getLogger();
 var Game = require('./models/game').model;
 var Stats = require('./models/stats').model;
 var CollectionRun = require('./models/collectionRun').model;
+var mongoose = require('mongoose');
+var LastRun = mongoose.model('Game', require('./models/game').schema, 'lastRun');
 
 module.exports = {
+  updateLastRunData: function (data, collectionRun, callback) {
+    var gamesProcessed = [];
+    var gameUpdates = [];
+
+    data.forEach(function (entry) {
+      if (gamesProcessed.indexOf(entry.game.name) > -1 || entry.game.name === '') {
+        return;
+      }
+      gamesProcessed.push(entry.game.name);
+
+      gameUpdates.push(function (cb) {
+        var lastRunEntry = new LastRun({
+          name: entry.game.name,
+          twitchGameId: entry.game._id,
+          giantbombId: entry.game.giantbomb_id,
+          viewers: entry.viewers,
+          channels: entry.channels,
+          collectionRun: collectionRun._id
+        });
+        var lastRunObject =  lastRunEntry.toObject();
+        delete lastRunObject._id;
+
+        // LastRun.findOneAndUpdate({twitchGameId: entry.game._id}, lastRunEntry, {upsert:true}, function(err, affected){
+        LastRun.update({twitchGameId: entry.game._id}, lastRunObject, {upsert: true}, function (err, affected) {
+          if (err) {
+            logger.error('error while creating new game "%s" in database', entry.game.name);
+            logger.error(err);
+          }
+          logger.debug('added last run entry for game "%s" to database', entry.game.name);
+          cb();
+        });
+      });
+    });
+
+    // remove all other entries
+    gameUpdates.push(function (cb) {
+      LastRun.remove({name: { $nin: gamesProcessed}}, function (err) {
+        if (err) {
+          logger.error('error while removing other games from last run');
+          logger.error(err);
+        }
+        logger.debug('successfully removed other game from last run');
+        cb();
+      });
+    });
+
+    async.parallel(gameUpdates, function () {
+      callback(null);
+    });
+  },
+  updateGameAvgData: function (collectionRun, callback) {
+    console.log("avg");
+    // get all database entries
+    // update avg for each game
+    //  sum / (collectionRun - firstCollectionRunOfGame)
+    // save each entry back to database
+    var stream = Game.find().stream();
+
+    stream.on('data', function (game) {
+      console.log(game.name);
+      var collectionRunCount = collectionRun._id - game.stats[0].collectionRun + 1;
+
+      var viewersSum = game.stats.reduce(function (sum, statEntry) {
+        return sum + statEntry.viewers;
+      }, 0);
+      var channelsSum = game.stats.reduce(function (sum, statEntry) {
+        return sum + statEntry.channels;
+      }, 0);
+      var ratioSum = game.stats.reduce(function (sum, statEntry) {
+        var ratio = 0;
+        if (statEntry.channels > 0) {
+          ratio = statEntry.viewers / statEntry.channels;
+        }
+        return sum + ratio;
+      }, 0);
+
+      var viewersAvg = viewersSum / collectionRunCount;
+      var channelsAvg = channelsSum / collectionRunCount;
+      var ratioAvg = ratioSum / collectionRunCount;
+
+      game.avg = {
+        viewers: viewersAvg,
+        channels: channelsAvg,
+        ratio: ratioAvg
+      };
+
+      game.save(function (err) {
+        if (err) {
+          logger.error('error while updating avg for game');
+          logger.error(err);
+        }
+      });
+    });
+
+    stream.on('close', function () {
+      callback(null);
+    });
+  },
   updateGameData: function (data, collectionRun, callback) {
     // update or create received twitch games in db
     var gamesProcessed = [];
@@ -52,7 +152,6 @@ module.exports = {
     });
 
     async.parallel(gameUpdates, function () {
-      logger.info('finished data collection run');
       callback(null);
     });
   },

@@ -62,6 +62,8 @@ var collectData = function () {
         var updateTasks = [function (cb) {
           dataUpdater.updateGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
+          dataUpdater.updateLastRunData(result[0], currentCollectionRun, cb);
+        }, function (cb) {
           dataUpdater.updateTotalStatsData(result[1], currentCollectionRun, cb);
         }];
 
@@ -72,7 +74,10 @@ var collectData = function () {
             return;
           }
 
-          collectionTimerWatch.end();
+          dataUpdater.updateGameAvgData(currentCollectionRun, function () {
+            logger.info('finished data collection run');
+            collectionTimerWatch.end();
+          });
         });
       });
     } else {
@@ -90,5 +95,5 @@ var collectData = function () {
 
 setInterval(function () {
   collectData();
-}, 1000 * 60 * 1);
+}, 1000 * 60 * 100);
 collectData();

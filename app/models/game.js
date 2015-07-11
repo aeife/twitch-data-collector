@@ -24,6 +24,27 @@ var GameSchema = new Schema({
     giantbombId: {
       type: Number
     },
+    viewers: {
+        type: Number
+    },
+    channels: {
+        type: Number
+    },
+    collectionRun: {
+        type: Number,
+        ref: 'CollectionRun'
+    },
+    avg: {
+      channels: {
+        type: Number
+      },
+      viewers: {
+        type: Number
+      },
+      ratio: {
+        type: Number
+      }
+    },
     stats: [StatsSchema]
 });
 
