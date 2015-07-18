@@ -74,10 +74,8 @@ var collectData = function () {
             return;
           }
 
-          dataUpdater.updateGameAvgData(currentCollectionRun, function () {
-            logger.info('finished data collection run');
-            collectionTimerWatch.end();
-          });
+          logger.info('finished data collection run');
+          collectionTimerWatch.end();
         });
       });
     } else {

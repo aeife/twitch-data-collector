@@ -57,59 +57,12 @@ module.exports = {
       callback(null);
     });
   },
-  updateGameAvgData: function (collectionRun, callback) {
-    console.log("avg");
-    // get all database entries
-    // update avg for each game
-    //  sum / (collectionRun - firstCollectionRunOfGame)
-    // save each entry back to database
-    var stream = Game.find().stream();
-
-    stream.on('data', function (game) {
-      console.log(game.name);
-      var collectionRunCount = collectionRun._id - game.stats[0].collectionRun + 1;
-
-      var viewersSum = game.stats.reduce(function (sum, statEntry) {
-        return sum + statEntry.viewers;
-      }, 0);
-      var channelsSum = game.stats.reduce(function (sum, statEntry) {
-        return sum + statEntry.channels;
-      }, 0);
-      var ratioSum = game.stats.reduce(function (sum, statEntry) {
-        var ratio = 0;
-        if (statEntry.channels > 0) {
-          ratio = statEntry.viewers / statEntry.channels;
-        }
-        return sum + ratio;
-      }, 0);
-
-      var viewersAvg = viewersSum / collectionRunCount;
-      var channelsAvg = channelsSum / collectionRunCount;
-      var ratioAvg = ratioSum / collectionRunCount;
-
-      game.avg = {
-        viewers: viewersAvg,
-        channels: channelsAvg,
-        ratio: ratioAvg
-      };
-
-      game.save(function (err) {
-        if (err) {
-          logger.error('error while updating avg for game');
-          logger.error(err);
-        }
-      });
-    });
-
-    stream.on('close', function () {
-      callback(null);
-    });
-  },
   updateGameData: function (data, collectionRun, callback) {
     // update or create received twitch games in db
     var gamesProcessed = [];
     var gameUpdates = [];
     data.forEach(function (entry) {
+      console.log(entry);
       // prevent duplicates: only process game once
       if (gamesProcessed.indexOf(entry.game.name) > -1 || entry.game.name === '') {
         return;

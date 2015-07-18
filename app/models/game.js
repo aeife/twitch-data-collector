@@ -34,17 +34,6 @@ var GameSchema = new Schema({
         type: Number,
         ref: 'CollectionRun'
     },
-    avg: {
-      channels: {
-        type: Number
-      },
-      viewers: {
-        type: Number
-      },
-      ratio: {
-        type: Number
-      }
-    },
     stats: [StatsSchema]
 });
 
