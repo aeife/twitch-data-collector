@@ -18,12 +18,18 @@ module.exports = {
       gamesProcessed.push(entry.game.name);
 
       gameUpdates.push(function (cb) {
+        var ratio = 0;
+        if (entry.channels > 0 && entry.viewers > 0) {
+          ratio = entry.viewers / entry.channels;
+        }
+
         var lastRunEntry = new LastRun({
           name: entry.game.name,
           twitchGameId: entry.game._id,
           giantbombId: entry.game.giantbomb_id,
           viewers: entry.viewers,
           channels: entry.channels,
+          ratio: ratio,
           collectionRun: collectionRun._id
         });
         var lastRunObject =  lastRunEntry.toObject();

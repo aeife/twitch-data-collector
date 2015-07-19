@@ -30,6 +30,9 @@ var GameSchema = new Schema({
     channels: {
         type: Number
     },
+    ratio: {
+        type: Number
+    },
     collectionRun: {
         type: Number,
         ref: 'CollectionRun'
