@@ -47,14 +47,14 @@ module.exports = {
       });
     });
 
-    // remove all other entries
+    // update all other entries
     gameUpdates.push(function (cb) {
-      LastRun.remove({name: { $nin: gamesProcessed}}, function (err) {
+      LastRun.update({name: { $nin: gamesProcessed}}, {$set: {channels: 0, viewers: 0, ratio: 0}}, {multi: true}, function (err, res) {
         if (err) {
-          logger.error('error while removing other games from last run');
+          logger.error('error while updating other games from last run');
           logger.error(err);
         }
-        logger.debug('successfully removed other game from last run');
+        logger.debug('successfully updated other games from last run');
         cb();
       });
     });
@@ -68,7 +68,6 @@ module.exports = {
     var gamesProcessed = [];
     var gameUpdates = [];
     data.forEach(function (entry) {
-      console.log(entry);
       // prevent duplicates: only process game once
       if (gamesProcessed.indexOf(entry.game.name) > -1 || entry.game.name === '') {
         return;
