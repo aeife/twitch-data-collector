@@ -30,7 +30,10 @@ module.exports = {
           viewers: entry.viewers,
           channels: entry.channels,
           ratio: ratio,
-          collectionRun: collectionRun._id
+          collectionRun: {
+            run: collectionRun._id,
+            date: collectionRun.date
+          }
         });
         var lastRunObject =  lastRunEntry.toObject();
         delete lastRunObject._id;
@@ -77,7 +80,10 @@ module.exports = {
         var statEntry = new Stats({
           viewers: entry.viewers,
           channels: entry.channels,
-          collectionRun: collectionRun._id
+          collectionRun: {
+            run: collectionRun._id,
+            date: collectionRun.date
+          }
         });
         Game.update({twitchGameId: entry.game._id}, {$addToSet: {stats: statEntry}}, function (err, affected) {
           if (err) {
@@ -117,7 +123,10 @@ module.exports = {
     var totalStats = new Stats({
       viewers: data.viewers,
       channels: data.channels,
-      collectionRun: collectionRun._id
+      collectionRun: {
+        run: collectionRun._id,
+        date: collectionRun.date
+      }
     });
     logger.debug('adding total stats');
     totalStats.save(function(err) {
