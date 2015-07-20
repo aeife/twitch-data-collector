@@ -38,6 +38,12 @@ var server = app.listen(port, function () {
   logger.info('Example app listening at http://%s:%s', server.address().address, server.address().port);
 });
 
+process.on('uncaughtException', function(err) {
+    // log error then exit
+    logger.fatal(err);
+    process.exit(1);
+});
+
 var dataGatherer = require('./app/dataGatherer');
 var dataUpdater = require('./app/dataUpdater');
 var dataValidator = require('./app/dataValidator');
