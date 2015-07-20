@@ -64,6 +64,7 @@ var collectData = function () {
 
   async.parallel(dataGatherTasks, function (err, result) {
     if (!err && dataValidator.validateGameData(result[0]) && dataValidator.validateTotalStatsData(result[1])) {
+      retry = 0;
       dataUpdater.addNewCollectionRun(function (err, currentCollectionRun) {
         var updateTasks = [function (cb) {
           dataUpdater.updateGameData(result[0], currentCollectionRun, cb);
