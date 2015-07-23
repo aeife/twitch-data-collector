@@ -4,15 +4,9 @@ var autoIncrement = require('mongoose-auto-increment');
 
 var CollectionRunSchema = new Schema({
     date: {
-      type: Date
+      type: Date,
+      default: Date.now
     }
-});
-
-CollectionRunSchema.pre('save', function(next){
-  if (!this.date) {
-    this.date = new Date();
-  }
-  next();
 });
 
 CollectionRunSchema.plugin(autoIncrement.plugin, 'CollectionRun');
