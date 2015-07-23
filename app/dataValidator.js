@@ -15,7 +15,6 @@ module.exports = {
 
       if (missingData) {
         logger.error('gameData invalid: does not contain needed data');
-        logger.error(missingData);
         valid = false;
       }
 
