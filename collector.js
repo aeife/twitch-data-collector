@@ -6,6 +6,7 @@ var log4js = require('log4js');
 var metrics = require('./app/metrics');
 var collectionMeter = metrics.meter('dataCollection');
 var collectionTimer = metrics.timer('dataCollectionTime');
+var twitchDataGatherTimer = metrics.timer('twitchDataGatherTime');
 var collectionTimerWatch;
 
 log4js.configure({
@@ -53,6 +54,7 @@ var collectData = function () {
   logger.info('starting data collection run');
   collectionMeter.mark();
   collectionTimerWatch = collectionTimer.start();
+  twitchDataGatherTimerWatch = twitchDataGatherTimer.start();
 
   var dataGatherTasks = [function (cb) {
     dataGatherer.gatherGamesData(cb);
@@ -61,6 +63,7 @@ var collectData = function () {
   }];
 
   async.parallel(dataGatherTasks, function (err, result) {
+    twitchDataGatherTimerWatch.end();
     if (!err && dataValidator.validateGameData(result[0]) && dataValidator.validateTotalStatsData(result[1])) {
       retry = 0;
       dataUpdater.addNewCollectionRun(function (err, currentCollectionRun) {
