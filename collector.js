@@ -4,7 +4,6 @@ var _ = require('lodash');
 var async = require('async');
 var log4js = require('log4js');
 var metrics = require('./app/metrics');
-var autoIncrement = require('mongoose-auto-increment');
 var collectionMeter = metrics.meter('dataCollection');
 var collectionTimer = metrics.timer('dataCollectionTime');
 var collectionTimerWatch;
@@ -29,7 +28,6 @@ var mongoose = require('mongoose');
 var dbConnection = mongoose.connect('mongodb://localhost:27017/twitchdata', {
   server: { socketOptions: { keepAlive: 1}}
 });
-autoIncrement.initialize(dbConnection);
 
 var args = process.argv.slice(2);
 var port = args[0] || 3000;
