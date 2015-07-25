@@ -98,5 +98,5 @@ var collectData = function () {
 
 setInterval(function () {
   collectData();
-}, 1000 * 60 * 100);
+}, 1000 * 60 * 60);
 collectData();
