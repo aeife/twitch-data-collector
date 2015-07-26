@@ -139,8 +139,8 @@ module.exports = {
       callback(null);
     });
   },
-  addNewCollectionRun: function (date, callback) {
-    new CollectionRun({date: date}).save(function (err, entry) {
+  addNewCollectionRun: function (callback) {
+    new CollectionRun().save(function (err, entry) {
       if (err) {
         logger.error('error while saving new collection run', game.name);
         logger.error(err);
