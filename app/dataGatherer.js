@@ -18,15 +18,15 @@ var _gatherFullData = function (name, url, dataParam, callback) {
 
     var twitchRequests = [];
     for (var i = 0; i <= total; i = i+limit) {
-      logger.debug('requesting %s?limit=%s&offset=%s', url, limit, i);
       (function (offset) {
         twitchRequests.push(function (cb) {
+          logger.debug('requesting %s?limit=%s&offset=%s', url, limit, offset);
           request.get({url: url, qs: {limit: limit, offset: offset}, json: true}, cb);
         });
       })(i);
     }
 
-    async.parallel(twitchRequests, function (err, results) {
+    async.parallelLimit(twitchRequests, 10, function (err, results) {
       var twitchData = results.reduce(function (combinedData, result) {
         return combinedData.concat(result[1][dataParam]);
       }, []);
