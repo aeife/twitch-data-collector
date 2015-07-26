@@ -60,11 +60,13 @@ var collectData = function () {
     dataGatherer.gatherGamesData(cb);
   }, function (cb) {
     dataGatherer.gatherGeneralStats(cb);
+  }, function (cb) {
+    dataGatherer.gatherChannelsData(cb);
   }];
 
   async.parallel(dataGatherTasks, function (err, result) {
     twitchDataGatherTimerWatch.end();
-    if (!err && dataValidator.validateGameData(result[0]) && dataValidator.validateGeneralStatsData(result[1])) {
+    if (!err && dataValidator.validateGameData(result[0]) && dataValidator.validateGeneralStatsData(result[1]) && dataValidator.validateChannelData(result[2])) {
       retry = 0;
       dataUpdater.addNewCollectionRun(function (err, currentCollectionRun) {
         var updateTasks = [function (cb) {
@@ -73,6 +75,10 @@ var collectData = function () {
           dataUpdater.updateCurrentGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
           dataUpdater.updateGeneralStatsData(result[1], currentCollectionRun, cb);
+        }, function (cb) {
+          dataUpdater.updateChannelData(result[2], currentCollectionRun, cb);
+        }, function (cb) {
+          dataUpdater.updateCurrentChannelData(result[2], currentCollectionRun, cb);
         }];
 
         async.parallel(updateTasks, function (err, result) {

@@ -1,8 +1,10 @@
 var async = require('async');
 var logger = require('log4js').getLogger();
 var Game = require('./models/game').model;
+var Channel = require('./models/channel').model;
 var Stats = require('./models/stats').model;
 var CurrentGame = require('./models/currentGame').model;
+var CurrentChannel = require('./models/currentChannel').model;
 var CollectionRun = require('./models/collectionRun').model;
 var mongoose = require('mongoose');
 
@@ -115,6 +117,114 @@ module.exports = {
     });
 
     async.parallel(gameUpdates, function () {
+      callback(null);
+    });
+  },
+  updateChannelData: function (data, collectionRun, callback) {
+    // update or create received twitch games in db
+    var channelsProcessed = [];
+    var channelUpdates = [];
+    data.forEach(function (entry) {
+      // prevent duplicates: only process channel once
+      if (!entry.channel || !entry.channel._id || channelsProcessed.indexOf(entry.channel._id) > -1 || !entry.channel.views || entry.channel.views < 1000000) {
+        return;
+      }
+
+      channelsProcessed.push(entry.channel._id);
+      channelUpdates.push(function (cb) {
+        var statEntry = new Stats({
+          viewers: entry.viewers,
+          followers: entry.channel.followers,
+          collectionRun: {
+            run: collectionRun._id,
+            date: collectionRun.date
+          }
+        });
+
+        Channel.update({twitchChannelId: entry.channel._id}, {name: entry.channel.display_name, views: entry.channel.views, $addToSet: {stats: statEntry}}, function (err, affected) {
+          if (err) {
+            logger.error('error while updating channel "%s" in database', entry.channel.display_name);
+            logger.error(err);
+            callback(err);
+            return;
+          }
+
+          if (!affected.n) {
+            new Channel({
+              name: entry.channel.display_name,
+              twitchChannelId: entry.channel._id,
+              language: entry.channel.language,
+              views: entry.channel.views,
+              stats: [statEntry]
+            }).save(function (err) {
+              if (err) {
+                logger.error('error while creating new channel "%s" in database', entry.channel.display_name);
+                logger.error(err);
+              }
+              logger.debug('added new channel "%s" to database', entry.channel.display_name);
+              cb();
+            });
+          } else {
+            logger.debug('added stat entry to channel "%s"', entry.channel.display_name);
+            cb();
+          }
+        });
+      });
+    });
+
+    async.parallel(channelUpdates, function () {
+      callback(null);
+    });
+  },
+  updateCurrentChannelData: function (data, collectionRun, callback) {
+    var channelsProcessed = [];
+    var channelUpdates = [];
+
+    data.forEach(function (entry) {
+      if (!entry.channel || !entry.channel._id || channelsProcessed.indexOf(entry.channel._id) > -1 || !entry.channel.views || entry.channel.views < 1000000) {
+        return;
+      }
+      channelsProcessed.push(entry.channel._id);
+
+      channelUpdates.push(function (cb) {
+        var currentChannelEntry = new CurrentChannel({
+          name: entry.channel.display_name,
+          twitchChannelId: entry.channel._id,
+          viewers: entry.viewers,
+          views: entry.channel.views,
+          followers: entry.channel.followers,
+          collectionRun: {
+            run: collectionRun._id,
+            date: collectionRun.date
+          }
+        });
+        var currentChannelObject =  currentChannelEntry.toObject();
+        delete currentChannelObject._id;
+
+        CurrentChannel.update({twitchChannelId: entry.channel._id}, currentChannelObject, {upsert: true}, function (err, affected) {
+          if (err) {
+            logger.error('error while creating new current channel "%s" in database', entry.channel.display_name);
+            logger.error(err);
+          }
+          logger.debug('added current channel entry for channel "%s" to database', entry.channel.display_name);
+          cb();
+        });
+      });
+    });
+
+    // update all other entries
+    channelUpdates.push(function (cb) {
+      CurrentChannel.update({twitchChannelId: { $nin: channelsProcessed}}, {$set: {viewers: 0}}, {multi: true}, function (err, res) {
+        if (err) {
+          logger.error('error while updating other current channels');
+          logger.error(err);
+        }
+        logger.debug('successfully updated other current channels');
+        cb();
+      });
+    });
+
+    async.parallel(channelUpdates, function () {
       callback(null);
     });
   },

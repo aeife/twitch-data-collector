@@ -2,7 +2,11 @@ var request = require('request');
 var async = require('async');
 var logger = require('log4js').getLogger();
 
-var _gatherFullData = function (name, url, dataParam, callback) {
+var _gatherFullData = function (name, url, dataParam, maxTotal, callback) {
+  if (!maxTotal) {
+      maxTotal = Number.MAX_VALUE;
+  }
+
   logger.debug('requesting %s data from twitch', name);
 
   request.get({url: url + '?limit=1', json: true}, function (err, res, data) {
@@ -14,7 +18,7 @@ var _gatherFullData = function (name, url, dataParam, callback) {
     }
 
     var limit = 100;
-    var total = data._total + limit;
+    var total = Math.min(maxTotal, data._total + limit);
 
     var twitchRequests = [];
     for (var i = 0; i <= total; i = i+limit) {
@@ -52,6 +56,9 @@ module.exports = {
     });
   },
   gatherGamesData: function (callback) {
-    _gatherFullData('game', 'https://api.twitch.tv/kraken/games/top', 'top', callback);
+    _gatherFullData('game', 'https://api.twitch.tv/kraken/games/top', 'top', null, callback);
+  },
+  gatherChannelsData: function (callback) {
+    _gatherFullData('channel', 'https://api.twitch.tv/kraken/streams', 'streams', 900, callback);
   }
 };
