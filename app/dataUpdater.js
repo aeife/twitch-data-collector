@@ -84,7 +84,7 @@ module.exports = {
             date: collectionRun.date
           }
         });
-        Game.update({twitchGameId: entry.game._id}, {$addToSet: {stats: statEntry}}, function (err, affected) {
+        Game.update({twitchGameId: entry.game._id}, {name: entry.game.name, $addToSet: {stats: statEntry}}, function (err, affected) {
           if (err) {
             logger.error('error while updating game "%s" in database', entry.game.name);
             logger.error(err);
@@ -139,8 +139,8 @@ module.exports = {
       callback(null);
     });
   },
-  addNewCollectionRun: function (callback) {
-    new CollectionRun().save(function (err, entry) {
+  addNewCollectionRun: function (date, callback) {
+    new CollectionRun({date: date}).save(function (err, entry) {
       if (err) {
         logger.error('error while saving new collection run', game.name);
         logger.error(err);
