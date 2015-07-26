@@ -19,14 +19,7 @@ var StatsSchema = new Schema({
   }
 });
 
-StatsSchema.pre('save', function(next){
-  if (!this.dateCreated) {
-    this.dateCreated = new Date();
-  }
-  next();
-});
-
 module.exports = {
-  model: mongoose.model('Stats', StatsSchema, 'totalStats'),
+  model: mongoose.model('Stats', StatsSchema, 'generalstats'),
   schema: StatsSchema
 };

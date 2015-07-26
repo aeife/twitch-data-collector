@@ -59,20 +59,20 @@ var collectData = function () {
   var dataGatherTasks = [function (cb) {
     dataGatherer.gatherGamesData(cb);
   }, function (cb) {
-    dataGatherer.gatherTotalStats(cb);
+    dataGatherer.gatherGeneralStats(cb);
   }];
 
   async.parallel(dataGatherTasks, function (err, result) {
     twitchDataGatherTimerWatch.end();
-    if (!err && dataValidator.validateGameData(result[0]) && dataValidator.validateTotalStatsData(result[1])) {
+    if (!err && dataValidator.validateGameData(result[0]) && dataValidator.validateGeneralStatsData(result[1])) {
       retry = 0;
       dataUpdater.addNewCollectionRun(function (err, currentCollectionRun) {
         var updateTasks = [function (cb) {
           dataUpdater.updateGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
-          dataUpdater.updateLastRunData(result[0], currentCollectionRun, cb);
+          dataUpdater.updateCurrentGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
-          dataUpdater.updateTotalStatsData(result[1], currentCollectionRun, cb);
+          dataUpdater.updateGeneralStatsData(result[1], currentCollectionRun, cb);
         }];
 
         async.parallel(updateTasks, function (err, result) {

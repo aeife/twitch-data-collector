@@ -20,7 +20,7 @@ module.exports = {
 
       return valid;
   },
-  validateTotalStatsData: function (data) {
+  validateGeneralStatsData: function (data) {
     return data && data.channels && data.viewers;
   }
 };

@@ -3,7 +3,7 @@ var async = require('async');
 var logger = require('log4js').getLogger();
 
 module.exports = {
-  gatherTotalStats: function (callback) {
+  gatherGeneralStats: function (callback) {
     logger.debug('requesting streams summary data from twitch');
 
     request.get({url: 'https://api.twitch.tv/kraken/streams/summary', json: true}, function (err, res, data) {

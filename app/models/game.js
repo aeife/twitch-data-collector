@@ -9,12 +9,6 @@ var GameSchema = new Schema({
         unique: true,
         index: true
     },
-    dateCreated: {
-      type: Date
-    },
-    dateModified: {
-      type: Date
-    },
     twitchGameId: {
       type: Number,
       required: true,
@@ -24,33 +18,7 @@ var GameSchema = new Schema({
     giantbombId: {
       type: Number
     },
-    viewers: {
-        type: Number
-    },
-    channels: {
-        type: Number
-    },
-    ratio: {
-        type: Number
-    },
-    collectionRun: {
-        run: {
-          type: Number,
-          ref: 'CollectionRun'
-        },
-        date: {
-          type: Date
-        }
-    },
     stats: [StatsSchema]
-});
-
-GameSchema.pre('save', function(next){
-  this.dateModified = new Date();
-  if (!this.dateCreated) {
-    this.dateCreated = new Date();
-  }
-  next();
 });
 
 module.exports = {

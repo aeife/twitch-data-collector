@@ -2,12 +2,12 @@ var async = require('async');
 var logger = require('log4js').getLogger();
 var Game = require('./models/game').model;
 var Stats = require('./models/stats').model;
+var CurrentGame = require('./models/currentGame').model;
 var CollectionRun = require('./models/collectionRun').model;
 var mongoose = require('mongoose');
-var LastRun = mongoose.model('Game', require('./models/game').schema, 'lastRun');
 
 module.exports = {
-  updateLastRunData: function (data, collectionRun, callback) {
+  updateCurrentGameData: function (data, collectionRun, callback) {
     var gamesProcessed = [];
     var gameUpdates = [];
 
@@ -23,7 +23,7 @@ module.exports = {
           ratio = entry.viewers / entry.channels;
         }
 
-        var lastRunEntry = new LastRun({
+        var currentGameEntry = new CurrentGame({
           name: entry.game.name,
           twitchGameId: entry.game._id,
           giantbombId: entry.game.giantbomb_id,
@@ -35,16 +35,15 @@ module.exports = {
             date: collectionRun.date
           }
         });
-        var lastRunObject =  lastRunEntry.toObject();
-        delete lastRunObject._id;
+        var currentGameObject =  currentGameEntry.toObject();
+        delete currentGameObject._id;
 
-        // LastRun.findOneAndUpdate({twitchGameId: entry.game._id}, lastRunEntry, {upsert:true}, function(err, affected){
-        LastRun.update({twitchGameId: entry.game._id}, lastRunObject, {upsert: true}, function (err, affected) {
+        CurrentGame.update({twitchGameId: entry.game._id}, currentGameObject, {upsert: true}, function (err, affected) {
           if (err) {
-            logger.error('error while creating new game "%s" in database', entry.game.name);
+            logger.error('error while creating new current game "%s" in database', entry.game.name);
             logger.error(err);
           }
-          logger.debug('added last run entry for game "%s" to database', entry.game.name);
+          logger.debug('added current game entry for game "%s" to database', entry.game.name);
           cb();
         });
       });
@@ -52,12 +51,12 @@ module.exports = {
 
     // update all other entries
     gameUpdates.push(function (cb) {
-      LastRun.update({name: { $nin: gamesProcessed}}, {$set: {channels: 0, viewers: 0, ratio: 0}}, {multi: true}, function (err, res) {
+      CurrentGame.update({name: { $nin: gamesProcessed}}, {$set: {channels: 0, viewers: 0, ratio: 0}}, {multi: true}, function (err, res) {
         if (err) {
-          logger.error('error while updating other games from last run');
+          logger.error('error while updating other current games');
           logger.error(err);
         }
-        logger.debug('successfully updated other games from last run');
+        logger.debug('successfully updated other current games');
         cb();
       });
     });
@@ -119,8 +118,8 @@ module.exports = {
       callback(null);
     });
   },
-  updateTotalStatsData: function (data, collectionRun, callback) {
-    var totalStats = new Stats({
+  updateGeneralStatsData: function (data, collectionRun, callback) {
+    var generalStats = new Stats({
       viewers: data.viewers,
       channels: data.channels,
       collectionRun: {
@@ -128,10 +127,10 @@ module.exports = {
         date: collectionRun.date
       }
     });
-    logger.debug('adding total stats');
-    totalStats.save(function(err) {
+    logger.debug('adding general stats');
+    generalStats.save(function(err) {
       if (err) {
-        logger.error('error while saving total stats');
+        logger.error('error while saving general stats');
         logger.error(err);
         callback(err);
         return;
