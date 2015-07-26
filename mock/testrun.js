@@ -33,7 +33,7 @@ var collectData = function (date) {
 };
 
 var startDate = new Date('01/01/2014 18:34');
-var endDate = new Date('03/01/2014 18:34');
+var endDate = new Date('07/26/2015 18:34');
 var date = new Date(startDate);
 var mockData = require('./mockData.js');
 mockData.initMockData(2);
