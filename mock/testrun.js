@@ -5,6 +5,22 @@ var dbConnection = mongoose.connect('mongodb://localhost:27017/twitchdata', {
   server: { socketOptions: { keepAlive: 1}}
 });
 
+var log4js = require('log4js');
+log4js.configure({
+  appenders: [
+    { type: 'console' },
+    { type: 'file', filename: 'logs/collector.log'}
+  ]
+});
+var logger = log4js.getLogger();
+logger.setLevel('INFO');
+
+process.on('uncaughtException', function(err) {
+    // log error then exit
+    logger.fatal(err);
+    process.exit(1);
+});
+
 var dataGatherer = require('../app/dataGatherer');
 var dataUpdater = require('../app/dataUpdater');
 
@@ -46,7 +62,7 @@ var testRun = function () {
     if (date.getTime() === oldDate.getTime()) {
       date = new Date(date.setHours(date.getHours()+2));
     }
-    console.log(date);
+    logger.info(date);
     mockData.mockWithRandomData(date, {months: [2, 3, 8]});
     collectData(date);
   }
