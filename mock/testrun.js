@@ -1,5 +1,5 @@
 var async = require('async');
-
+var CollectionRun = require('../app/models/collectionRun').model;
 var mongoose = require('mongoose');
 var dbConnection = mongoose.connect('mongodb://localhost:27017/twitchdata', {
   server: { socketOptions: { keepAlive: 1}}
@@ -16,7 +16,7 @@ var collectData = function (date) {
   }];
 
   async.parallel(dataGatherTasks, function (err, result) {
-      dataUpdater.addNewCollectionRun(date, function (err, currentCollectionRun) {
+      new CollectionRun({date: date}).save(function (err, currentCollectionRun) {
         var updateTasks = [function (cb) {
           dataUpdater.updateGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
