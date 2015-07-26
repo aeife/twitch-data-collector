@@ -29,7 +29,7 @@ var _randomizeMockData = function (games, date, omit) {
     tempGames.splice(0, 1);
 
     // change name of second game
-    tempGames[1].game.name = 'other name';
+    tempGames[0].game.name = 'other name';
   }
 
   return tempGames;
