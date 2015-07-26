@@ -24,9 +24,12 @@ var _randomizeMockData = function (games, date, omit) {
   });
 
   var tempGames = games.slice();
-  if (omit && omit.months && omit.months.indexOf(date.getMonth()) > -1) {
+  if (omit && omit.months && omit.months.indexOf(date.getUTCMonth()+1) > -1) {
     // remove first game from results
     tempGames.splice(0, 1);
+
+    // change name of second game
+    tempGames[1].game.name = 'other name';
   }
 
   return tempGames;

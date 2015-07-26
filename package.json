@@ -24,5 +24,9 @@
     "measured": "1.0.0",
     "mongoose": "4.0.5",
     "request": "2.57.0"
+  },
+  "devDependencies": {
+    "chance": "^0.7.6",
+    "nock": "^2.9.1"
   }
 }
