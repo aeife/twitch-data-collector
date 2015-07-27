@@ -135,13 +135,19 @@ module.exports = {
         var statEntry = new Stats({
           viewers: entry.viewers,
           followers: entry.channel.followers,
+          logo: entry.channel.logo,
           collectionRun: {
             run: collectionRun._id,
             date: collectionRun.date
           }
         });
 
-        Channel.update({twitchChannelId: entry.channel._id}, {name: entry.channel.display_name, views: entry.channel.views, $addToSet: {stats: statEntry}}, function (err, affected) {
+        Channel.update({twitchChannelId: entry.channel._id}, {
+          name: entry.channel.display_name,
+          views: entry.channel.views,
+          logo: entry.channel.logo,
+          $addToSet: {stats: statEntry}
+        }, function (err, affected) {
           if (err) {
             logger.error('error while updating channel "%s" in database', entry.channel.display_name);
             logger.error(err);
@@ -193,6 +199,7 @@ module.exports = {
           viewers: entry.viewers,
           views: entry.channel.views,
           followers: entry.channel.followers,
+          logo: entry.channel.logo,
           collectionRun: {
             run: collectionRun._id,
             date: collectionRun.date
