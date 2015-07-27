@@ -1,8 +1,24 @@
 var async = require('async');
-
+var CollectionRun = require('../app/models/collectionRun').model;
 var mongoose = require('mongoose');
 var dbConnection = mongoose.connect('mongodb://localhost:27017/twitchdata', {
   server: { socketOptions: { keepAlive: 1}}
+});
+
+var log4js = require('log4js');
+log4js.configure({
+  appenders: [
+    { type: 'console' },
+    { type: 'file', filename: 'logs/collector.log'}
+  ]
+});
+var logger = log4js.getLogger();
+logger.setLevel('INFO');
+
+process.on('uncaughtException', function(err) {
+    // log error then exit
+    logger.fatal(err);
+    process.exit(1);
 });
 
 var dataGatherer = require('../app/dataGatherer');
@@ -16,7 +32,7 @@ var collectData = function (date) {
   }];
 
   async.parallel(dataGatherTasks, function (err, result) {
-      dataUpdater.addNewCollectionRun(date, function (err, currentCollectionRun) {
+      new CollectionRun({date: date}).save(function (err, currentCollectionRun) {
         var updateTasks = [function (cb) {
           dataUpdater.updateGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
@@ -33,7 +49,7 @@ var collectData = function (date) {
 };
 
 var startDate = new Date('01/01/2014 18:34');
-var endDate = new Date('03/01/2014 18:34');
+var endDate = new Date('07/26/2015 18:34');
 var date = new Date(startDate);
 var mockData = require('./mockData.js');
 mockData.initMockData(2);
@@ -46,7 +62,7 @@ var testRun = function () {
     if (date.getTime() === oldDate.getTime()) {
       date = new Date(date.setHours(date.getHours()+2));
     }
-    console.log(date);
+    logger.info(date);
     mockData.mockWithRandomData(date, {months: [2, 3, 8]});
     collectData(date);
   }
