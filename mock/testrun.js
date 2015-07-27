@@ -29,6 +29,8 @@ var collectData = function (date) {
     dataGatherer.gatherGamesData(cb);
   }, function (cb) {
     dataGatherer.gatherGeneralStats(cb);
+  }, function (cb) {
+    dataGatherer.gatherChannelsData(cb);
   }];
 
   async.parallel(dataGatherTasks, function (err, result) {
@@ -39,6 +41,10 @@ var collectData = function (date) {
           dataUpdater.updateCurrentGameData(result[0], currentCollectionRun, cb);
         }, function (cb) {
           dataUpdater.updateGeneralStatsData(result[1], currentCollectionRun, cb);
+        }, function (cb) {
+          dataUpdater.updateChannelData(result[2], currentCollectionRun, cb);
+        }, function (cb) {
+          dataUpdater.updateCurrentChannelData(result[2], currentCollectionRun, cb);
         }];
 
         async.parallel(updateTasks, function (err, result) {
