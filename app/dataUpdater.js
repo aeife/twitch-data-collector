@@ -146,6 +146,7 @@ module.exports = {
           name: entry.channel.display_name,
           views: entry.channel.views,
           logo: entry.channel.logo,
+          game: entry.game,
           $addToSet: {stats: statEntry}
         }, function (err, affected) {
           if (err) {
@@ -161,6 +162,8 @@ module.exports = {
               twitchChannelId: entry.channel._id,
               language: entry.channel.language,
               views: entry.channel.views,
+              logo: entry.channel.logo,
+              game: entry.game,
               stats: [statEntry]
             }).save(function (err) {
               if (err) {
@@ -200,6 +203,7 @@ module.exports = {
           views: entry.channel.views,
           followers: entry.channel.followers,
           logo: entry.channel.logo,
+          game: entry.game,
           collectionRun: {
             run: collectionRun._id,
             date: collectionRun.date
