@@ -135,7 +135,7 @@ module.exports = {
         var statEntry = new Stats({
           viewers: entry.viewers,
           followers: entry.channel.followers,
-          logo: entry.channel.logo,
+          game: entry.game,
           collectionRun: {
             run: collectionRun._id,
             date: collectionRun.date
@@ -146,7 +146,6 @@ module.exports = {
           name: entry.channel.display_name,
           views: entry.channel.views,
           logo: entry.channel.logo,
-          game: entry.game,
           $addToSet: {stats: statEntry}
         }, function (err, affected) {
           if (err) {
@@ -163,7 +162,7 @@ module.exports = {
               language: entry.channel.language,
               views: entry.channel.views,
               logo: entry.channel.logo,
-              game: entry.game,
+              created: entry.channel.created_at,
               stats: [statEntry]
             }).save(function (err) {
               if (err) {
@@ -204,6 +203,7 @@ module.exports = {
           followers: entry.channel.followers,
           logo: entry.channel.logo,
           game: entry.game,
+          created: entry.channel.created_at,
           collectionRun: {
             run: collectionRun._id,
             date: collectionRun.date
