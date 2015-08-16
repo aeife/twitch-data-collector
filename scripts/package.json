@@ -1,0 +1,16 @@
+{
+  "name": "twitchdatacollectorscripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": " ",
+  "dependencies": {
+    "async": "^1.4.2",
+    "mongodb": "^2.0.41"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
