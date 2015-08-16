@@ -8,20 +8,32 @@ var url = 'mongodb://localhost:27017/twitchdata';
 MongoClient.connect(url, function (err, db) {
   if (err) {
     console.log('Unable to connect to the mongoDB server. Error:', err);
-  } else {
-    console.log('Connection established to', url);
+    return;
+  }
 
-    var startDate = new Date('08/10/2015 18:34');
-    var endDate = new Date('08/10/2015 23:34');
-    var objIdMin = ObjectId(Math.floor((startDate)/1000).toString(16) + "0000000000000000");
-    var objIdMax = ObjectId(Math.floor((endDate)/1000).toString(16) + "0000000000000000");
+  console.log('Connection established to', url);
 
-    var data = {
-      channels: [],
-      games: [],
-      collectionruns: [],
-      generalstats: []
-    };
+  var startDate = new Date('08/10/2015 18:34');
+  var endDate = new Date('08/10/2015 23:34');
+  var objIdMin = ObjectId(Math.floor((startDate)/1000).toString(16) + "0000000000000000");
+  var objIdMax = ObjectId(Math.floor((endDate)/1000).toString(16) + "0000000000000000");
+
+  var data = {
+    channels: [],
+    games: [],
+    collectionruns: [],
+    generalstats: []
+  };
+
+  // export collectionRun data
+  var collectionRunsCollection = db.collection('collectionruns');
+  collectionRunsCollection.find({'_id': {$gt: objIdMin, $lt: objIdMax}}).toArray(function (err, result) {
+    data.collectionruns = result;
+
+    var collectionRunIds = data.collectionruns.map(function (collectionRun) {
+      return collectionRun._id;
+    });
+    console.log(collectionRunIds);
     var actions = [];
 
     // export channel data
@@ -29,7 +41,7 @@ MongoClient.connect(url, function (err, db) {
     actions.push(function (cb) {
       channelsCollection.aggregate([
         {$unwind: '$stats'},
-        {$match: {name: 'LIRIK', 'stats._id': {$gt: objIdMin, $lt: objIdMax}}},
+        {$match: {'stats.collectionRun.run': {$in: collectionRunIds}}},
         { "$group": {
           "_id": "$_id",
           "name": {$first: "$name"},
@@ -48,7 +60,7 @@ MongoClient.connect(url, function (err, db) {
     actions.push(function (cb) {
       gamesCollection.aggregate([
         {$unwind: '$stats'},
-        {$match: {name: 'League of Legends', 'stats._id': {$gt: objIdMin, $lt: objIdMax}}},
+        {$match: {'stats.collectionRun.run': {$in: collectionRunIds}}},
         { "$group": {
           "_id": "$_id",
           "name": {$first: "$name"},
@@ -65,18 +77,9 @@ MongoClient.connect(url, function (err, db) {
     // export generalstats data
     var generalStatsCollection = db.collection('generalstats');
     actions.push(function (cb) {
-      generalStatsCollection.find({'_id': {$gt: objIdMin, $lt: objIdMax}}).toArray(function (err, result) {
+      generalStatsCollection.find({'collectionRun.run': {$in: collectionRunIds}}).toArray(function (err, result) {
         console.log(err);
         data.generalstats = result;
-        cb();
-      });
-    });
-
-    // export collectionRun data
-    var collectionRunsCollection = db.collection('collectionruns');
-    actions.push(function (cb) {
-      collectionRunsCollection.find({'_id': {$gt: objIdMin, $lt: objIdMax}}).toArray(function (err, result) {
-        data.collectionruns = result;
         cb();
       });
     });
@@ -90,6 +93,6 @@ MongoClient.connect(url, function (err, db) {
           console.log("JSON saved to " + outputFilename);
         }
       });
-    })
-  }
+    });
+  });
 });
