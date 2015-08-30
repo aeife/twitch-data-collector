@@ -143,7 +143,8 @@ module.exports = {
         });
 
         Channel.update({twitchChannelId: entry.channel._id}, {
-          name: entry.channel.display_name,
+          name: entry.channel.name,
+          displayName: entry.channel.display_name,
           views: entry.channel.views,
           logo: entry.channel.logo,
           $addToSet: {stats: statEntry}
@@ -157,7 +158,8 @@ module.exports = {
 
           if (!affected.n) {
             new Channel({
-              name: entry.channel.display_name,
+              name: entry.channel.name,
+              displayName: entry.channel.display_name,
               twitchChannelId: entry.channel._id,
               language: entry.channel.language,
               views: entry.channel.views,
@@ -196,7 +198,8 @@ module.exports = {
 
       channelUpdates.push(function (cb) {
         var currentChannelEntry = new CurrentChannel({
-          name: entry.channel.display_name,
+          name: entry.channel.name,
+          displayName: entry.channel.display_name,
           twitchChannelId: entry.channel._id,
           viewers: entry.viewers,
           views: entry.channel.views,
